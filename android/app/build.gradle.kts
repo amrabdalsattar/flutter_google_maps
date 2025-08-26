@@ -11,7 +11,7 @@ plugins {
 android {
     namespace = "com.example.google_maps"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = "27.0.12077973"
+    ndkVersion = "29.0.13113456"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -27,14 +27,15 @@ android {
         applicationId = "com.example.google_maps"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 20
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
          // Inject the property
-        manifestPlaceholders = [
-        MAPS_API_KEY_FOR_ANDROID: MAPS_API_KEY_FOR_ANDROID
-            ]
+          manifestPlaceholders.put(
+        "MAPS_API_KEY_FOR_ANDROID",
+        project.findProperty("MAPS_API_KEY_FOR_ANDROID") ?: ""
+    )
     }
 
     buildTypes {
