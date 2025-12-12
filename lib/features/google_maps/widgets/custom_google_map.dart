@@ -22,31 +22,70 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
     }
   }
 
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
+  late GoogleMapController _controller;
 
   late CameraPosition _kGooglePlex;
 
   @override
   void initState() {
     super.initState();
-    _kGooglePlex = const CameraPosition(target: LatLng(31, 41));
+    _kGooglePlex = const CameraPosition(
+      target: LatLng(26.56345335289818, 31.694334847033378),
+      zoom: 12,
+    );
     _requestLocationPermission();
   }
 
   @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return GoogleMap(
-      mapType: MapType.hybrid,
-      initialCameraPosition: _kGooglePlex,
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
-      minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
-      rotateGesturesEnabled: true,
-      tiltGesturesEnabled: true,
-      zoomGesturesEnabled: true,
-      scrollGesturesEnabled: true,
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: _kGooglePlex,
+          onMapCreated: (controller) {
+            _controller = controller;
+          },
+          minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
+          // cameraTargetBounds: CameraTargetBounds(
+          //   LatLngBounds(
+          //     southwest: const LatLng(26.47787750747611, 31.80212755051422),
+          //     northeast: const LatLng(27.471794598784626, 30.82856646762486),
+          //   ),
+          // ),
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+        ),
+        Positioned(
+          right: 16,
+          left: 16,
+          bottom: 10,
+          child: ElevatedButton(
+            onPressed: () {
+              final LatLng newPosition = const LatLng(
+                27.47190882710127,
+                30.830197250611466,
+              );
+              _controller.animateCamera(CameraUpdate.newLatLng(newPosition));
+            },
+            child: const Text('Change location'),
+          ),
+        ),
+      ],
     );
   }
 }
+
+
+// World View => 0 - 3
+// Country View => 4 - 6
+// City View =>  10 - 12
+// Street View => 13 - 17
+// Building View => 18 - 20
