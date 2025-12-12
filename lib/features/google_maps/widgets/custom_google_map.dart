@@ -30,6 +30,7 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
   @override
   void initState() {
     super.initState();
+    
     _kGooglePlex = const CameraPosition(target: LatLng(31, 41));
     _requestLocationPermission();
   }
