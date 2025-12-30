@@ -1,9 +1,7 @@
-import 'dart:async';
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
+
+import '../../../core/services/google_maps_services.dart';
 
 class CustomGoogleMap extends StatefulWidget {
   const CustomGoogleMap({super.key});
@@ -13,51 +11,49 @@ class CustomGoogleMap extends StatefulWidget {
 }
 
 class _CustomGoogleMapState extends State<CustomGoogleMap> {
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.location.request();
-    if (status.isGranted) {
-      log('Location permission granted');
-    } else {
-      log('Location permission denied');
-    }
-  }
-
-  late GoogleMapController _controller;
-
-  late CameraPosition _kGooglePlex;
+  bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
-    _kGooglePlex = const CameraPosition(
-      target: LatLng(26.56345335289818, 31.694334847033378),
-      zoom: 12,
-    );
-    _requestLocationPermission();
+    _initMap();
+  }
+
+  Future _initMap() async {
+    await GoogleMapsServices.requestLocationPermission();
+    setState(() {
+      _isReady = true;
+    });
+  }
+
+  void _initMapStyle() async {
+    final nightStyle = await DefaultAssetBundle.of(
+      context,
+    ).loadString('assets/map_styles/night_map_style.json');
+    GoogleMapsServices.controller?.setMapStyle(nightStyle);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    GoogleMapsServices.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isReady || GoogleMapsServices.initialCameraPosition == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Stack(
       children: [
         GoogleMap(
-          initialCameraPosition: _kGooglePlex,
+          initialCameraPosition: GoogleMapsServices.initialCameraPosition!,
           onMapCreated: (controller) {
-            _controller = controller;
+            GoogleMapsServices.controller = controller;
+            _initMapStyle();
           },
           minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
-          // cameraTargetBounds: CameraTargetBounds(
-          //   LatLngBounds(
-          //     southwest: const LatLng(26.47787750747611, 31.80212755051422),
-          //     northeast: const LatLng(27.471794598784626, 30.82856646762486),
-          //   ),
-          // ),
           rotateGesturesEnabled: true,
           tiltGesturesEnabled: true,
           zoomGesturesEnabled: true,
@@ -68,17 +64,19 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
           left: 16,
           bottom: 10,
           child: ElevatedButton(
-            onPressed: () {
-              final LatLng newPosition = const LatLng(
-                27.47190882710127,
-                30.830197250611466,
-              );
-              _controller.animateCamera(CameraUpdate.newLatLng(newPosition));
-            },
+            onPressed: _changeLocation,
             child: const Text('Change location'),
           ),
         ),
       ],
+    );
+  }
+
+  void _changeLocation() {
+    final newPosition = const LatLng(27.47190882710127, 30.830197250611466);
+
+    GoogleMapsServices.controller?.animateCamera(
+      CameraUpdate.newLatLng(newPosition),
     );
   }
 }
