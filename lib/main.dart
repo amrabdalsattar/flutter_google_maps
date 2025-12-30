@@ -12,7 +12,7 @@ class MapSample extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: CustomGoogleMap()),
+      home: Scaffold(body: SafeArea(top: false, child: CustomGoogleMap())),
     );
   }
 }

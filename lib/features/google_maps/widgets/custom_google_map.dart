@@ -1,9 +1,7 @@
-import 'dart:async';
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:permission_handler/permission_handler.dart';
+
+import '../../../core/services/google_maps_services.dart';
 
 class CustomGoogleMap extends StatefulWidget {
   const CustomGoogleMap({super.key});
@@ -13,40 +11,79 @@ class CustomGoogleMap extends StatefulWidget {
 }
 
 class _CustomGoogleMapState extends State<CustomGoogleMap> {
-  Future<void> _requestLocationPermission() async {
-    final status = await Permission.location.request();
-    if (status.isGranted) {
-      log('Location permission granted');
-    } else {
-      log('Location permission denied');
-    }
-  }
-
-  final Completer<GoogleMapController> _controller =
-      Completer<GoogleMapController>();
-
-  late CameraPosition _kGooglePlex;
+  bool _isReady = false;
 
   @override
   void initState() {
     super.initState();
-    _kGooglePlex = const CameraPosition(target: LatLng(31, 41));
-    _requestLocationPermission();
+    _initMap();
+  }
+
+  Future _initMap() async {
+    await GoogleMapsServices.requestLocationPermission();
+    setState(() {
+      _isReady = true;
+    });
+  }
+
+  void _initMapStyle() async {
+    final nightStyle = await DefaultAssetBundle.of(
+      context,
+    ).loadString('assets/map_styles/night_map_style.json');
+    GoogleMapsServices.controller?.setMapStyle(nightStyle);
+  }
+
+  @override
+  void dispose() {
+    GoogleMapsServices.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return GoogleMap(
-      mapType: MapType.hybrid,
-      initialCameraPosition: _kGooglePlex,
-      onMapCreated: (GoogleMapController controller) {
-        _controller.complete(controller);
-      },
-      minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
-      rotateGesturesEnabled: true,
-      tiltGesturesEnabled: true,
-      zoomGesturesEnabled: true,
-      scrollGesturesEnabled: true,
+    if (!_isReady || GoogleMapsServices.initialCameraPosition == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Stack(
+      children: [
+        GoogleMap(
+          initialCameraPosition: GoogleMapsServices.initialCameraPosition!,
+          onMapCreated: (controller) {
+            GoogleMapsServices.controller = controller;
+            _initMapStyle();
+          },
+          minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
+          rotateGesturesEnabled: true,
+          tiltGesturesEnabled: true,
+          zoomGesturesEnabled: true,
+          scrollGesturesEnabled: true,
+        ),
+        Positioned(
+          right: 16,
+          left: 16,
+          bottom: 10,
+          child: ElevatedButton(
+            onPressed: _changeLocation,
+            child: const Text('Change location'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _changeLocation() {
+    final newPosition = const LatLng(27.47190882710127, 30.830197250611466);
+
+    GoogleMapsServices.controller?.animateCamera(
+      CameraUpdate.newLatLng(newPosition),
     );
   }
 }
+
+
+// World View => 0 - 3
+// Country View => 4 - 6
+// City View =>  10 - 12
+// Street View => 13 - 17
+// Building View => 18 - 20
