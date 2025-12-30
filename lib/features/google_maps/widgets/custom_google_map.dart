@@ -21,9 +21,8 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
 
   Future _initMap() async {
     await GoogleMapsServices.requestLocationPermission();
-    setState(() {
-      _isReady = true;
-    });
+    _isReady = true;
+    setState(() {});
   }
 
   void _initMapStyle() async {
@@ -45,38 +44,20 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Stack(
-      children: [
-        GoogleMap(
-          initialCameraPosition: GoogleMapsServices.initialCameraPosition!,
-          onMapCreated: (controller) {
-            GoogleMapsServices.controller = controller;
-            _initMapStyle();
-          },
-          minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
-          rotateGesturesEnabled: true,
-          tiltGesturesEnabled: true,
-          zoomGesturesEnabled: true,
-          scrollGesturesEnabled: true,
-        ),
-        Positioned(
-          right: 16,
-          left: 16,
-          bottom: 10,
-          child: ElevatedButton(
-            onPressed: _changeLocation,
-            child: const Text('Change location'),
-          ),
-        ),
-      ],
-    );
-  }
-
-  void _changeLocation() {
-    final newPosition = const LatLng(27.47190882710127, 30.830197250611466);
-
-    GoogleMapsServices.controller?.animateCamera(
-      CameraUpdate.newLatLng(newPosition),
+    return GoogleMap(
+      initialCameraPosition: GoogleMapsServices.initialCameraPosition!,
+      circles: GoogleMapsServices.circles,
+      onMapCreated: (controller) {
+        GoogleMapsServices.controller = controller;
+        _initMapStyle();
+      },
+      markers: GoogleMapsServices.markers,
+      minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
+      rotateGesturesEnabled: true,
+      tiltGesturesEnabled: true,
+      zoomGesturesEnabled: true,
+      zoomControlsEnabled: false,
+      scrollGesturesEnabled: true,
     );
   }
 }
