@@ -32,13 +32,13 @@ class GoogleMapsServices {
       target: LatLng(30.0444, 31.2357),
       zoom: 12,
     );
-    _initMarkers();
+    await _initMarkers();
     _initCircles();
     // _initPolyLine();
     // _initPolygons();
   }
 
-  static void _initMarkers() async {
+  static Future<void> _initMarkers() async {
     final BitmapDescriptor customIcon = BitmapDescriptor.bytes(
       await ImagesUtils.getImageFromRawData(AppImages.locationMarker, 26),
     );
