@@ -3,23 +3,27 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../../../../core/extensions/dialogs.dart';
-import '../../../../core/services/location_service/google_maps_services.dart';
-import '../../logic/location_tracking/location_tracking_cubit.dart';
+import '../../../core/extensions/dialogs.dart';
+import '../../../core/services/location_service/google_maps_services.dart';
+import '../logic/location_tracking/location_tracking_cubit.dart';
 
-class CustomGoogleMap extends StatefulWidget {
-  const CustomGoogleMap({super.key});
+class LocationTrackingProvider extends StatefulWidget {
+  const LocationTrackingProvider({super.key});
 
   @override
-  State<CustomGoogleMap> createState() => _CustomGoogleMapState();
+  State<LocationTrackingProvider> createState() =>
+      _LocationTrackingProviderState();
 }
 
-class _CustomGoogleMapState extends State<CustomGoogleMap> {
+class _LocationTrackingProviderState extends State<LocationTrackingProvider> {
   bool _isReady = false;
   StreamSubscription? _locationStream;
   late final LocationTrackingCubit _cubit;
+  final GoogleMapsService _mapsService = GoogleMapsService();
+  LocationData? _initialLocationData;
 
   @override
   void initState() {
@@ -28,7 +32,7 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
   }
 
   Future<void> _setup() async {
-    await GoogleMapsService.requestLocationPermission(
+    await _mapsService.requestLocationPermission(
       onDenied: () => _showPermissionDeniedDialog(),
       onGranted: () async {
         if (!mounted) return;
@@ -50,38 +54,38 @@ class _CustomGoogleMapState extends State<CustomGoogleMap> {
   }
 
   Future<void> _initLocationTracker() async {
-    final locationData = await GoogleMapsService.getLocation();
-    _cubit = LocationTrackingCubit(initialLocationData: locationData);
-    _locationStream = GoogleMapsService.trackLocation((locationData) {
+    _initialLocationData = await _mapsService.getLocation();
+    _cubit = LocationTrackingCubit(initialLocationData: _initialLocationData!);
+    _locationStream = _mapsService.trackLocation((locationData) {
       _cubit.trackLocation(locationData);
     });
   }
 
   @override
   void dispose() {
-    GoogleMapsService.dispose();
+    _mapsService.dispose();
     _locationStream?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isReady || GoogleMapsService.initialCameraPosition == null) {
+    if (!_isReady || _mapsService.initialCameraPosition == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
     return BlocProvider(
       create: (_) => _cubit,
       child: BlocBuilder<LocationTrackingCubit, LocationTrackingState>(
-        buildWhen: (previous, current) => previous.location != current.location,
         builder: (context, state) {
           return GoogleMap(
-            initialCameraPosition: GoogleMapsService.initialCameraPosition!,
+            initialCameraPosition: _mapsService.initialCameraPosition!,
             onMapCreated: (controller) {
-              GoogleMapsService.controller = controller;
-              GoogleMapsService.initMapStyle(context);
+              _mapsService.controller = controller;
+              _mapsService.initMapStyle(context);
+              _cubit.initMarker(_initialLocationData!);
             },
-            markers: GoogleMapsService.markers,
+            markers: state.markers,
             minMaxZoomPreference: const MinMaxZoomPreference(5, 20),
             rotateGesturesEnabled: true,
             tiltGesturesEnabled: true,

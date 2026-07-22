@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'features/google_maps/ui/widgets/custom_google_map.dart';
+import 'features/google_maps/ui/location_tracking_provider.dart';
 
 void main() {
   runApp(const MapSample());
@@ -12,7 +12,9 @@ class MapSample extends StatelessWidget {
   Widget build(BuildContext context) {
     return const MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Scaffold(body: SafeArea(top: false, child: CustomGoogleMap())),
+      home: Scaffold(
+        body: SafeArea(top: false, child: LocationTrackingProvider()),
+      ),
     );
   }
 }
